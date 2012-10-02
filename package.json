@@ -5,6 +5,7 @@
 	"private": true,
 	"dependencies": {
 		"redis": "0.7.2",
-		"ntwitter": "0.5.0"
+		"ntwitter": "0.5.0",
+		"redis": "0.7.2"
 	}
 }
