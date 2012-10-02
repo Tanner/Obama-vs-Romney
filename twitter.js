@@ -17,12 +17,16 @@ var client = redis.createClient();
 // Check to see if our keys exist, if not, create them please
 client.exists(OBAMA_KEY, function(error, exists) {
 	if (!exists) {
+		console.log("Creating key for Obama...");
+
 		client.set(OBAMA_KEY, 0);
 	};
 });
 
 client.exists(ROMNEY_KEY, function(error, exists) {
 	if (!exists) {
+		console.log("Creating key for Romney...");
+		
 		client.set(ROMNEY_KEY, 0);
 	};
 });
