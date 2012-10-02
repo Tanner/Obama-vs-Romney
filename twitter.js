@@ -9,6 +9,8 @@ const ROMNEY_KEY = 'romney';
 const OBAMA_TRACK_WORDS = ['obama', 'barack'];
 const ROMNEY_TRACK_WORDS = ['romney', 'mitt'];
 
+const COUNT_PRINT_STATS = 10
+
 console.log("Connecting to Redis...");
 
 // Prepare Redis
@@ -26,7 +28,7 @@ client.exists(OBAMA_KEY, function(error, exists) {
 client.exists(ROMNEY_KEY, function(error, exists) {
 	if (!exists) {
 		console.log("Creating key for Romney...");
-		
+
 		client.set(ROMNEY_KEY, 0);
 	};
 });
@@ -44,6 +46,8 @@ var twit = new twitter({
 console.log("Streaming...");
 
 // Stream away!
+var count = 0;
+
 twit.stream(
 	'statuses/filter',
 	{
@@ -58,11 +62,17 @@ twit.stream(
 			if (stringContains(tweet.text, ROMNEY_TRACK_WORDS)) {
 				client.incr(ROMNEY_KEY);
 			}
+
+			count++;
+
+			if (count >= COUNT_PRINT_STATS) {
+				printStats();
+
+				count = 0;
+			}
 		});
 	}
 );
-
-setTimeout(printStats, 500);
 
 function printStats() {
 	multi = client.multi();
@@ -79,8 +89,6 @@ function printStats() {
 
 		console.log("Obama: " + obama_percentage.toFixed(2) + "% vs Romney: " + romney_percentage.toFixed(2) + "%");
 	});
-
-	setTimeout(printStats, 500);
 }
 
 function stringContains(string, array) {
