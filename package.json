@@ -1,0 +1,10 @@
+{
+	"name": "ObamavsRomney",
+	"description": "Viewing who is more popular on Twitter.",
+	"version": "0.0.1",
+	"private": true,
+	"dependencies": {
+		"redis": "0.7.2",
+		"ntwitter": "0.5.0"
+	}
+}
