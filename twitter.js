@@ -48,15 +48,36 @@ twit.stream(
 	function(stream) {
 		stream.on('data', function(tweet) {
 			if (stringContains(tweet.text, OBAMA_TRACK_WORDS)) {
-				console.log("OBAMA");
+				client.incr(OBAMA_KEY);
 			}
 
 			if (stringContains(tweet.text, ROMNEY_TRACK_WORDS)) {
-				console.log("ROMNEY");
+				client.incr(ROMNEY_KEY);
 			}
 		});
 	}
 );
+
+setTimeout(printStats, 500);
+
+function printStats() {
+	multi = client.multi();
+	multi.get(OBAMA_KEY);
+	multi.get(ROMNEY_KEY);
+
+	multi.exec(function(error, replies) {
+		var obama = parseInt(replies[0]);
+		var romney = parseInt(replies[1]);
+		var total = obama + romney;
+
+		var obama_percentage = ((obama / total) * 100);
+		var romney_percentage = ((romney / total) * 100);
+
+		console.log("Obama: " + obama_percentage.toFixed(2) + "% vs Romney: " + romney_percentage.toFixed(2) + "%");
+	});
+
+	setTimeout(printStats, 500);
+}
 
 function stringContains(string, array) {
 	for (var i = 0; i < array.length; i++) {
