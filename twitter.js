@@ -1,94 +1,37 @@
 var twitter = require('ntwitter');
-var redis = require('redis');
 
 var credentials = require('./credentials.js');
-
-const OBAMA_KEY = 'obama';
-const ROMNEY_KEY = 'romney';
 
 const OBAMA_TRACK_WORDS = ['obama', 'barack'];
 const ROMNEY_TRACK_WORDS = ['romney', 'mitt'];
 
-const COUNT_PRINT_STATS = 10
-
-console.log("Connecting to Redis...");
-
-// Prepare Redis
-var client = redis.createClient();
-
-// Check to see if our keys exist, if not, create them please
-client.exists(OBAMA_KEY, function(error, exists) {
-	if (!exists) {
-		console.log("Creating key for Obama...");
-
-		client.set(OBAMA_KEY, 0);
-	};
-});
-
-client.exists(ROMNEY_KEY, function(error, exists) {
-	if (!exists) {
-		console.log("Creating key for Romney...");
-
-		client.set(ROMNEY_KEY, 0);
-	};
-});
-
-console.log("Connecting to Twitter...");
-
-// Prepare Twitter
-var twit = new twitter({
-	consumer_key: credentials.consumer_key,
-	consumer_secret: credentials.consumer_secret,
-	access_token_key: credentials.access_token_key,
-	access_token_secret: credentials.access_token_secret
-});
-
-console.log("Streaming...");
-
-// Stream away!
-var count = 0;
-
-twit.stream(
-	'statuses/filter',
-	{
-		track: OBAMA_TRACK_WORDS + ROMNEY_TRACK_WORDS
-	},
-	function(stream) {
-		stream.on('data', function(tweet) {
-			if (stringContains(tweet.text, OBAMA_TRACK_WORDS)) {
-				client.incr(OBAMA_KEY);
-			}
-
-			if (stringContains(tweet.text, ROMNEY_TRACK_WORDS)) {
-				client.incr(ROMNEY_KEY);
-			}
-
-			count++;
-
-			if (count >= COUNT_PRINT_STATS) {
-				printStats();
-
-				count = 0;
-			}
-		});
-	}
-);
-
-function printStats() {
-	multi = client.multi();
-	multi.get(OBAMA_KEY);
-	multi.get(ROMNEY_KEY);
-
-	multi.exec(function(error, replies) {
-		var obama = parseInt(replies[0]);
-		var romney = parseInt(replies[1]);
-		var total = obama + romney;
-
-		var obama_percentage = ((obama / total) * 100);
-		var romney_percentage = ((romney / total) * 100);
-
-		console.log("Obama: " + obama_percentage.toFixed(2) + "% vs Romney: " + romney_percentage.toFixed(2) + "% (" + total + " tweets)");
+function streamTweets(obama_callback, romney_callback) {
+	// Prepare Twitter
+	var twit = new twitter({
+		consumer_key: credentials.consumer_key,
+		consumer_secret: credentials.consumer_secret,
+		access_token_key: credentials.access_token_key,
+		access_token_secret: credentials.access_token_secret
 	});
+
+	// Stream away!
+	twit.stream(
+		'statuses/filter',
+		{
+			track: OBAMA_TRACK_WORDS + ROMNEY_TRACK_WORDS
+		},
+		function(stream) {
+			stream.on('data', function(tweet) {
+				if (stringContains(tweet.text, OBAMA_TRACK_WORDS)) {
+					obama_callback();
+				}
+
+				if (stringContains(tweet.text, ROMNEY_TRACK_WORDS)) {
+					romney_callback();
+				}
+			});
+		}
+	);
 }
 
 function stringContains(string, array) {
@@ -100,3 +43,5 @@ function stringContains(string, array) {
 
 	return false;
 }
+
+exports.streamTweets = streamTweets;
