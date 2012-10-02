@@ -1,4 +1,5 @@
 var express = require('express');
+var http = require('http');
 var redis = require('redis');
 
 var twitter = require('./twitter.js');
@@ -25,25 +26,29 @@ client.exists(ROMNEY_KEY, function(error, exists) {
 // Start the twitter streaming
 twitter.streamTweets(function() {
 	client.incr(OBAMA_KEY);
-
-	console.log("Obama");
 }, function() {
 	client.incr(ROMNEY_KEY);
-
-	console.log("Romney");
 });
 
 // Start web server
 var app = express();
+var server = http.createServer(app);
+var io = require('socket.io').listen(server);
 
 app.engine('jade', require('jade').__express);
 app.set('views engine', 'jade');
 app.set('views', __dirname + '/views');
 
+app.use(express.static(__dirname + '/public'));
+
 app.get('/', function(req, res) {
 	res.render('index.jade');
 });
 
-app.listen(3000);
+io.sockets.on('connection', function(socket) {
+	socket.emit('candidate', { name: 'obama' });
+});
+
+server.listen(3000);
 
 console.log("Listening on port 3000...");
