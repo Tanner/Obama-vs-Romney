@@ -87,7 +87,7 @@ function printStats() {
 		var obama_percentage = ((obama / total) * 100);
 		var romney_percentage = ((romney / total) * 100);
 
-		console.log("Obama: " + obama_percentage.toFixed(2) + "% vs Romney: " + romney_percentage.toFixed(2) + "%");
+		console.log("Obama: " + obama_percentage.toFixed(2) + "% vs Romney: " + romney_percentage.toFixed(2) + "% (" + total + " tweets)");
 	});
 }
 
