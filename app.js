@@ -1,33 +1,20 @@
 var express = require('express');
 var http = require('http');
-var redis = require('redis');
 
 var twitter = require('./twitter.js');
 
-const OBAMA_KEY = 'obama';
-const ROMNEY_KEY = 'romney';
-
-// Prepare Redis
-var client = redis.createClient();
-
-// Check to see if our keys exist, if not, create them please
-client.exists(OBAMA_KEY, function(error, exists) {
-	if (!exists) {
-		client.set(OBAMA_KEY, 0);
-	};
-});
-
-client.exists(ROMNEY_KEY, function(error, exists) {
-	if (!exists) {
-		client.set(ROMNEY_KEY, 0);
-	};
-});
+// Twitter stream listeners
+var streamListeners = {
+	listeners: []
+};
 
 // Start the twitter streaming
-twitter.streamTweets(function() {
-	client.incr(OBAMA_KEY);
-}, function() {
-	client.incr(ROMNEY_KEY);
+twitter.streamTweets(function(obama, romney) {
+	var listeners = streamListeners.listeners;
+
+	for (var i = 0; i < listeners.length; i++) {
+		streamListeners[listeners[i]](obama, romney);
+	}
 });
 
 // Start web server
@@ -46,7 +33,26 @@ app.get('/', function(req, res) {
 });
 
 io.sockets.on('connection', function(socket) {
-	socket.emit('candidate', { name: 'obama' });
+	streamListeners.listeners.push(socket.id);
+	streamListeners[socket.id] = function(obama, romney) {
+		if (obama) {
+			socket.emit('candidate', { name: 'obama' });
+		}
+
+		if (romney) {
+			socket.emit('candidate', { name: 'romney' });
+		}
+	};
+
+	socket.on('disconnect', function() {
+		for (var i = 0; i < streamListeners.listeners.length; i++) {
+			if (streamListeners.listeners[i] == socket.id) {
+				streamListeners.listeners.splice(i, 1);
+			}
+		}
+
+		delete streamListeners[socket.id];
+	});
 });
 
 server.listen(3000);
