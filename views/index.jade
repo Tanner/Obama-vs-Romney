@@ -2,8 +2,20 @@ html
 	head
 		title Obama vs Romney
 
+		link(href='stylesheets/style.css', rel='stylesheet')
+
 		script(src='http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js')
 		script(src='/socket.io/socket.io.js')
 		script(src='javascripts/main.js')
 	body
-		h2 Obama vs Romney
+		div#wrapper
+			div.candidate#obama
+				h1 Obama
+				div.stat
+					span.count
+					span.percentage
+			div.candidate#romney
+				h1 Romney
+				div.stat
+					span.count
+					span.percentage
