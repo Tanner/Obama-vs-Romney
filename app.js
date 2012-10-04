@@ -70,6 +70,21 @@ io.sockets.on('connection', function(socket) {
 		if (romney) {
 			socket.emit('candidate', { name: 'romney' });
 		}
+
+		multi = client.multi();
+		multi.get(OBAMA_KEY);
+		multi.get(ROMNEY_KEY);
+
+		multi.exec(function(error, replies) {
+			var obama = parseInt(replies[0]);
+			var romney = parseInt(replies[1]);
+			var total = obama + romney;
+
+			var obama_percentage = ((obama / total) * 100);
+			var romney_percentage = ((romney / total) * 100);
+
+			socket.emit('stats', { obama: obama, romney: romney, obama_percentage: obama_percentage, romney_percentage: romney_percentage});
+		});
 	};
 
 	socket.on('disconnect', function() {
